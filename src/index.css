@@ -1,0 +1,13 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+:root { --bg: 255 247 240; --surface: 255 255 255; --primary: 255 138 76; --secondary: 139 107 232; --accent: 31 200 160; --text: 58 47 69; --border: 241 227 214; }
+html, body, #root { height: 100%; }
+body { @apply bg-canvas text-ink font-sans antialiased overflow-x-hidden; transition: background-color .3s, color .3s; }
+* { @apply border-line; }
+.card { @apply bg-surface rounded-3xl border shadow-soft; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary; }
+.btn-primary { @apply bg-primary text-white hover:brightness-105 shadow-soft; }
+.btn-ghost { @apply bg-primary/10 text-ink hover:bg-primary/20; }
+.input { @apply w-full rounded-2xl border bg-canvas px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+@media (max-width: 767px) { .input { font-size: 16px; } .btn { min-height: 44px; } }
