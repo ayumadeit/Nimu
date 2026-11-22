@@ -7,6 +7,8 @@ import Welcome from './pages/Welcome'
 import Dashboard from './pages/Dashboard'
 import ThemeStudio from './pages/ThemeStudio'
 import Notes from './pages/Notes'
+import StickyBoard from './pages/StickyBoard'
+import DrawingCanvas from './pages/DrawingCanvas'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -141,7 +143,7 @@ export default function App() {
         </header>
         <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 pb-28 md:p-8">
           <div className="mx-auto max-w-6xl">
-            {cur.id === 'home' ? <Dashboard go={go} /> : cur.id === 'notes' ? <Notes /> : cur.id === 'settings' ? <ThemeStudio /> : <Coming page={cur} />}
+            {cur.id === 'home' ? <Dashboard go={go} /> : cur.id === 'notes' ? <Notes /> : cur.id === 'sticky' ? <StickyBoard /> : cur.id === 'draw' ? <DrawingCanvas /> : cur.id === 'settings' ? <ThemeStudio /> : <Coming page={cur} />}
           </div>
         </main>
       </div>

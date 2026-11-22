@@ -347,6 +347,42 @@ export const BatchUpdateStickiesInputSchema = z.object({
 });
 export type BatchUpdateStickiesInput = z.infer<typeof BatchUpdateStickiesInputSchema>;
 
+export const StrokePointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  pressure: z.number().optional(),
+});
+export type StrokePoint = z.infer<typeof StrokePointSchema>;
+
+export const StrokeSchema = z.object({
+  tool: z.enum(['pen', 'pencil', 'highlighter', 'eraser']),
+  color: HexColorSchema,
+  size: z.number().positive(),
+  opacity: z.number().min(0).max(1),
+  points: z.array(StrokePointSchema),
+});
+export type Stroke = z.infer<typeof StrokeSchema>;
+
+export const CreateDrawingInputSchema = z.object({
+  title: z.string().trim().default('Untitled Drawing'),
+  paperType: z.enum(PAPER_TYPES).default('blank'),
+  strokes: z.array(StrokeSchema).default([]),
+  width: z.number().int().positive().default(800),
+  height: z.number().int().positive().default(600),
+});
+export type CreateDrawingInput = z.infer<typeof CreateDrawingInputSchema>;
+
+export const UpdateDrawingInputSchema = CreateDrawingInputSchema.partial().extend({
+  version: z.number().int().optional(),
+});
+export type UpdateDrawingInput = z.infer<typeof UpdateDrawingInputSchema>;
+
+export const AttachDrawingThumbnailInputSchema = z.object({
+  thumbnailUrl: z.string().optional(),
+  thumbnailDataUrl: z.string().optional(),
+});
+export type AttachDrawingThumbnailInput = z.infer<typeof AttachDrawingThumbnailInputSchema>;
+
 // ==========================================
 // TRANSACTIONS & BUDGETS & GOALS SCHEMAS
 // ==========================================

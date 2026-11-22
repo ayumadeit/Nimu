@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { ArrowDown, ArrowUp, Eye, EyeOff, FilePlus2, MinusCircle, PlusCircle, StickyNote, Brush, SlidersHorizontal, X } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { useStore, useTheme, inr, dayAgo, CATEGORIES } from '../store'
+import { apiRequest } from '../lib/api'
 import type { Go } from '../App'
 
 const QUOTES = ['Small steps, soft landings.', 'Write it down, let it go.', 'A tidy desk, a calmer mind.', 'Make a little room for joy.', 'Done is a lovely feeling.']
@@ -9,10 +10,25 @@ const TITLES: Record<string, string> = { spend: 'Spent this month', budget: 'Bud
 const WIDE = ['trend', 'notes', 'stickies', 'transactions']
 
 export default function Dashboard({ go }: { go: Go }) {
-  const { txs, notes, stickies, goals, budget, widgets, moveWidget, toggleWidget, addTx, toast } = useStore()
+  const { txs, notes, stickies, goals, budget, widgets, moveWidget, toggleWidget, addTx, toast, currentUser } = useStore()
   const pal = useTheme()
   const [edit, setEdit] = useState(false)
   const [form, setForm] = useState<null | 'expense' | 'income'>(null)
+  const [pinnedStickies, setPinnedStickies] = useState<any[]>(() => stickies.filter(s => s.pinned))
+
+  useEffect(() => {
+    if (currentUser) {
+      apiRequest('/sticky/pinned')
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setPinnedStickies(data.map(s => ({ ...s, rot: s.rotation || 0, pinned: true })))
+          }
+        })
+        .catch(() => {})
+    } else {
+      setPinnedStickies(stickies.filter(s => s.pinned))
+    }
+  }, [currentUser, stickies])
   const h = new Date().getHours()
   const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
   const month = new Date().toISOString().slice(0, 7)
@@ -38,7 +54,7 @@ export default function Dashboard({ go }: { go: Go }) {
       <XAxis dataKey="d" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} interval={2} /><Tooltip formatter={(v: number) => inr(v)} />
       <Area type="monotone" dataKey="v" stroke={pal.light.primary} strokeWidth={2.5} fill="url(#g)" /></AreaChart></ResponsiveContainer></div>,
     notes: <ul className="space-y-2">{[...notes].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3).map(n => <li key={n.id} className="rounded-2xl bg-primary/10 px-3 py-2"><p className="text-sm font-bold">{n.title}</p><p className="truncate text-xs opacity-60">{n.body}</p></li>)}</ul>,
-    stickies: stickies.filter(s => s.pinned).length ? <div className="flex flex-wrap gap-3">{stickies.filter(s => s.pinned).map(s => <div key={s.id} className="font-hand w-32 p-3 text-lg leading-tight text-[#3a2f45] shadow-soft" style={{ background: s.color, transform: `rotate(${s.rot}deg)` }}>{s.text}</div>)}</div>
+    stickies: pinnedStickies.length ? <div className="flex flex-wrap gap-3">{pinnedStickies.map(s => <div key={s.id} className="font-hand w-32 p-3 text-lg leading-tight text-[#3a2f45] shadow-soft" style={{ background: s.color, transform: `rotate(${s.rot}deg)` }}>{s.text}</div>)}</div>
       : <p className="text-sm opacity-60">Pin a sticky note and it will land here.</p>,
     transactions: txs.length ? <ul className="divide-y">{txs.slice(0, 5).map(t => <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="min-w-0"><b>{t.desc}</b><br /><span className="text-xs opacity-60">{t.category} · {t.date}</span></span>
       <b style={{ color: t.type === 'income' ? 'rgb(var(--accent))' : 'inherit' }}>{t.type === 'income' ? '+' : '−'}{inr(t.amount)}</b></li>)}</ul> : <p className="text-sm opacity-60">Your wallet has been enjoying some peace.</p>,

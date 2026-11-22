@@ -13,6 +13,8 @@ import { authRoutes } from './routes/auth.js';
 import { preferencesRoutes } from './routes/preferences.js';
 import { themesRoutes } from './routes/themes.js';
 import { notesRoutes } from './routes/notes.js';
+import { stickyRoutes } from './routes/sticky.js';
+import { drawingsRoutes } from './routes/drawings.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -86,6 +88,8 @@ export async function buildApp() {
   await app.register(preferencesRoutes, { prefix: '/api/v1/preferences' });
   await app.register(themesRoutes, { prefix: '/api/v1/themes' });
   await app.register(notesRoutes, { prefix: '/api/v1/notes' });
+  await app.register(stickyRoutes, { prefix: '/api/v1/sticky' });
+  await app.register(drawingsRoutes, { prefix: '/api/v1/drawings' });
 
   return app;
 }
