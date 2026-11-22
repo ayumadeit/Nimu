@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { PRESETS, Theme } from './themes'
+import { apiRequest, setAccessToken } from './lib/api'
 
 export type Mode = 'light' | 'dark' | 'system'
 export type Tx = { id: string; type: 'expense' | 'income'; amount: number; category: string; desc: string; date: string; method: string }
@@ -8,6 +9,8 @@ export type Note = { id: string; title: string; body: string; updatedAt: number;
 export type Sticky = { id: string; text: string; color: string; rot: number; pinned: boolean }
 export type Goal = { id: string; name: string; target: number; saved: number }
 export type Widget = { id: string; visible: boolean }
+export interface UserProfile { id: string; email: string; displayName?: string | null; avatarUrl?: string | null }
+
 export const CATEGORIES = ['Food', 'Groceries', 'Shopping', 'Travel', 'Entertainment', 'Education', 'Health', 'Bills', 'Subscriptions', 'Other']
 export const uid = () => Math.random().toString(36).slice(2, 10)
 export const dayAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) }
@@ -39,6 +42,8 @@ const seedGoals: Goal[] = [
   { id: uid(), name: 'Travel fund', target: 40000, saved: 9000 }]
 
 type State = {
+  currentUser: UserProfile | null
+  guestMode: boolean
   welcomed: boolean; themeId: string; mode: Mode; customThemes: Theme[]; sidebarCollapsed: boolean
   widgets: Widget[]; txs: Tx[]; notes: Note[]; stickies: Sticky[]; goals: Goal[]; budget: number
   toasts: { id: string; msg: string }[]
@@ -49,18 +54,64 @@ type State = {
   toggleWidget: (id: string) => void
   upsertTheme: (t: Theme) => void
   deleteTheme: (id: string) => void
+  logout: () => Promise<void>
 }
+
 export const useStore = create<State>()(persist((set, get) => ({
+  currentUser: null,
+  guestMode: false,
   welcomed: false, themeId: 'original', mode: 'system', customThemes: [], sidebarCollapsed: false,
   widgets: ['spend', 'budget', 'income', 'savings', 'trend', 'notes', 'stickies', 'transactions'].map(id => ({ id, visible: true })),
   txs: seedTx, notes: seedNotes, stickies: seedStickies, goals: seedGoals, budget: 25000, toasts: [],
-  set: p => set(p),
+  set: p => {
+    set(p)
+    // Synchronize preferences if user is logged in
+    if (get().currentUser && (p.themeId !== undefined || p.mode !== undefined || p.sidebarCollapsed !== undefined)) {
+      apiRequest('/preferences', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          themeId: p.themeId,
+          mode: p.mode,
+          sidebarCollapsed: p.sidebarCollapsed,
+        }),
+      }).catch(() => {})
+    }
+  },
   addTx: t => set(s => ({ txs: [{ ...t, id: uid() }, ...s.txs] })),
   toast: msg => { const id = uid(); set(s => ({ toasts: [...s.toasts, { id, msg }] })); setTimeout(() => set(s => ({ toasts: s.toasts.filter(x => x.id !== id) })), 2600) },
   moveWidget: (id, dir) => { const w = [...get().widgets]; const i = w.findIndex(x => x.id === id), j = i + dir; if (j < 0 || j >= w.length) return; [w[i], w[j]] = [w[j], w[i]]; set({ widgets: w }) },
   toggleWidget: id => set(s => ({ widgets: s.widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w) })),
-  upsertTheme: t => set(s => ({ customThemes: s.customThemes.some(c => c.id === t.id) ? s.customThemes.map(c => c.id === t.id ? t : c) : [...s.customThemes, t] })),
-  deleteTheme: id => set(s => ({ customThemes: s.customThemes.filter(c => c.id !== id), themeId: s.themeId === id ? 'original' : s.themeId })),
+  upsertTheme: async t => {
+    set(s => ({ customThemes: s.customThemes.some(c => c.id === t.id) ? s.customThemes.map(c => c.id === t.id ? t : c) : [...s.customThemes, t] }))
+    if (get().currentUser) {
+      try {
+        await apiRequest('/themes', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: t.name,
+            baseThemeId: t.baseId ?? null,
+            light: t.light,
+            dark: t.dark,
+          }),
+        })
+      } catch {}
+    }
+  },
+  deleteTheme: async id => {
+    set(s => ({ customThemes: s.customThemes.filter(c => c.id !== id), themeId: s.themeId === id ? 'original' : s.themeId }))
+    if (get().currentUser) {
+      try {
+        await apiRequest(`/themes/${id}`, { method: 'DELETE' })
+      } catch {}
+    }
+  },
+  logout: async () => {
+    try {
+      await apiRequest('/auth/logout', { method: 'POST' })
+    } catch {}
+    setAccessToken(null)
+    set({ currentUser: null, guestMode: false, welcomed: false })
+  },
 }), { name: 'nimu-state-v1', partialize: s => ({ ...s, toasts: [] }) }))
 
 export const useTheme = (): Theme => {

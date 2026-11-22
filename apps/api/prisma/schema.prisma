@@ -1,0 +1,378 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  passwordHash    String
+  displayName     String?
+  avatarUrl       String?
+  timeZone        String         @default("Asia/Kolkata")
+  currency        String         @default("INR")
+  locale          String         @default("en-IN")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  emailVerifiedAt DateTime?
+
+  // Relations
+  sessions        Session[]
+  preferences     Preferences?
+  customThemes    CustomTheme[]
+  collections     Collection[]
+  tags            Tag[]
+  notes           Note[]
+  mediaAssets     MediaAsset[]
+  stickyBoards    StickyBoard[]
+  stickyNotes     StickyNote[]
+  drawings        Drawing[]
+  transactions    Transaction[]
+  budgets         Budget[]
+  savingsGoals    SavingsGoal[]
+  goalContributions GoalContribution[]
+  recurringRules  RecurringRule[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  hashedToken  String
+  userAgent    String?
+  ip           String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  rotatedFrom  String?
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hashedToken])
+}
+
+model Preferences {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  themeId               String    @default("original")
+  mode                  String    @default("system")
+  sidebarCollapsed      Boolean   @default(false)
+  dashboardWidgets      Json      @default("[{\"id\":\"spend\",\"visible\":true},{\"id\":\"budget\",\"visible\":true},{\"id\":\"income\",\"visible\":true},{\"id\":\"savings\",\"visible\":true},{\"id\":\"trend\",\"visible\":true},{\"id\":\"notes\",\"visible\":true},{\"id\":\"stickies\",\"visible\":true},{\"id\":\"transactions\",\"visible\":true}]")
+  noteDefaults          Json      @default("{\"fontFamily\":\"sans\",\"fontSize\":16,\"autosave\":true,\"autosaveInterval\":800}")
+  financeDefaults       Json      @default("{\"currency\":\"INR\",\"monthlyBudget\":2500000,\"enabledCategories\":[\"Food\",\"Groceries\",\"Shopping\",\"Travel\",\"Entertainment\",\"Education\",\"Health\",\"Bills\",\"Subscriptions\",\"Other\"]}")
+  onboardingCompletedAt DateTime?
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CustomTheme {
+  id           String    @id @default(uuid())
+  userId       String
+  name         String
+  baseThemeId  String?
+  light        Json
+  dark         Json
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Collection {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  color     String?
+  icon      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]
+
+  @@index([userId])
+}
+
+model Tag {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     NoteTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Note {
+  id           String         @id @default(uuid())
+  userId       String
+  collectionId String?
+  title        String         @default("Untitled")
+  content      Json           @default("{\"type\":\"doc\",\"content\":[]}")
+  plainText    String         @default("")
+  excerpt      String         @default("")
+  fontFamily   String?
+  fontSize     Int?
+  background   String?
+  layout       String?
+  isPinned     Boolean        @default(false)
+  isFavorite   Boolean        @default(false)
+  isArchived   Boolean        @default(false)
+  wordCount    Int            @default(0)
+  version      Int            @default(1)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection?    @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  tags         NoteTag[]
+  revisions    NoteRevision[]
+  mediaAssets  MediaAsset[]
+
+  @@index([userId, deletedAt])
+  @@index([userId, isPinned])
+  @@index([userId, isArchived])
+  @@index([userId, collectionId])
+}
+
+model NoteTag {
+  noteId String
+  tagId  String
+
+  note   Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@index([noteId])
+  @@index([tagId])
+}
+
+model NoteRevision {
+  id        String   @id @default(uuid())
+  noteId    String
+  title     String
+  content   Json
+  createdAt DateTime @default(now())
+
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+}
+
+model MediaAsset {
+  id         String   @id @default(uuid())
+  userId     String
+  noteId     String?
+  kind       String   // image | gif | drawing
+  storageKey String
+  url        String?
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  caption    String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note       Note?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([noteId])
+}
+
+model StickyBoard {
+  id        String       @id @default(uuid())
+  userId    String
+  name      String       @default("Main Board")
+  createdAt DateTime     @default(now())
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     StickyNote[]
+
+  @@index([userId])
+}
+
+model StickyNote {
+  id                String       @id @default(uuid())
+  boardId           String
+  userId            String
+  text              String       @default("")
+  x                 Float        @default(0)
+  y                 Float        @default(0)
+  width             Float        @default(200)
+  height            Float        @default(200)
+  rotation          Float        @default(0)
+  zIndex            Int          @default(1)
+  color             String       @default("#FFF3B0")
+  fontFamily        String       @default("sans")
+  fontSize          Int          @default(14)
+  isPinned          Boolean      @default(false)
+  pinnedToDashboard Boolean      @default(false)
+  version           Int          @default(1)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board             StickyBoard  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deletedAt])
+  @@index([boardId])
+  @@index([userId, pinnedToDashboard])
+}
+
+model Drawing {
+  id               String    @id @default(uuid())
+  userId           String
+  title            String    @default("Untitled Drawing")
+  paperType        String    @default("blank") // blank | lined | dotted | grid | graph
+  strokes          Json      @default("[]")
+  thumbnailAssetId String?
+  width            Int       @default(800)
+  height           Int       @default(600)
+  version          Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deletedAt])
+}
+
+model Transaction {
+  id             String         @id @default(uuid())
+  userId         String
+  type           String         // expense | income
+  amountMinor    Int            // in paise
+  currency       String         @default("INR")
+  category       String
+  description    String         @default("")
+  paymentMethod  String         @default("upi")
+  date           DateTime       @db.Date
+  notes          String         @default("")
+  isRecurring    Boolean        @default(false)
+  recurringRuleId String?
+  idempotencyKey String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringRule  RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+
+  @@index([userId, deletedAt])
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, category])
+  @@index([idempotencyKey])
+}
+
+model Budget {
+  id               String           @id @default(uuid())
+  userId           String
+  month            String           // YYYY-MM
+  totalLimitMinor  Int              // in paise
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryBudgets  CategoryBudget[]
+
+  @@unique([userId, month])
+  @@index([userId])
+}
+
+model CategoryBudget {
+  id         String   @id @default(uuid())
+  budgetId   String
+  category   String
+  limitMinor Int      // in paise
+
+  budget     Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, category])
+  @@index([budgetId])
+}
+
+model SavingsGoal {
+  id            String             @id @default(uuid())
+  userId        String
+  name          String
+  targetMinor   Int                // in paise
+  savedMinor    Int                @default(0) // in paise
+  targetDate    DateTime?          @db.Date
+  icon          String             @default("Target")
+  color         String             @default("#6366F1")
+  completedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions GoalContribution[]
+
+  @@index([userId])
+}
+
+model GoalContribution {
+  id          String      @id @default(uuid())
+  goalId      String
+  userId      String
+  amountMinor Int         // in paise (positive deposit, negative withdrawal)
+  date        DateTime    @db.Date
+  note        String      @default("")
+  createdAt   DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal        SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@index([userId])
+}
+
+model RecurringRule {
+  id           String        @id @default(uuid())
+  userId       String
+  template     Json
+  frequency    String        // daily | weekly | monthly | yearly
+  nextRunAt    DateTime
+  createdAt    DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([nextRunAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  event     String
+  ip        String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([event])
+}
