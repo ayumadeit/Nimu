@@ -250,6 +250,62 @@ export const UpdateNoteInputSchema = z.object({
 });
 export type UpdateNoteInput = z.infer<typeof UpdateNoteInputSchema>;
 
+export const NoteQuerySchema = z.object({
+  q: z.string().optional(),
+  tag: z.string().optional(),
+  collectionId: z.string().optional(),
+  pinned: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
+  favorite: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
+  archived: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
+  recent: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
+  sort: z.enum(['updated', 'created', 'title']).default('updated'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().optional(),
+});
+export type NoteQuery = z.infer<typeof NoteQuerySchema>;
+
+export const CreateCollectionInputSchema = z.object({
+  name: z.string().trim().min(1, 'Collection name is required').max(100),
+  color: HexColorSchema.optional().nullable(),
+  icon: z.string().optional().nullable(),
+  sortOrder: z.number().int().default(0),
+});
+export type CreateCollectionInput = z.infer<typeof CreateCollectionInputSchema>;
+
+export const UpdateCollectionInputSchema = CreateCollectionInputSchema.partial();
+export type UpdateCollectionInput = z.infer<typeof UpdateCollectionInputSchema>;
+
+export const CreateTagInputSchema = z.object({
+  name: z.string().trim().min(1, 'Tag name is required').max(50),
+  color: HexColorSchema.optional().nullable(),
+});
+export type CreateTagInput = z.infer<typeof CreateTagInputSchema>;
+
+export const UpdateTagInputSchema = CreateTagInputSchema.partial();
+export type UpdateTagInput = z.infer<typeof UpdateTagInputSchema>;
+
+export const MergeTagsInputSchema = z.object({
+  sourceTagId: z.string().min(1),
+  targetTagId: z.string().min(1),
+});
+export type MergeTagsInput = z.infer<typeof MergeTagsInputSchema>;
+
+export const CreateMediaUrlInputSchema = z.object({
+  filename: z.string().min(1),
+  mimeType: z.string().min(1),
+  sizeBytes: z.number().int().positive().max(10 * 1024 * 1024, 'Max size is 10 MB'),
+  noteId: z.string().optional(),
+});
+export type CreateMediaUrlInput = z.infer<typeof CreateMediaUrlInputSchema>;
+
+export const CreateGifInputSchema = z.object({
+  url: z.string().url('Invalid GIF URL'),
+  noteId: z.string().optional(),
+  caption: z.string().optional(),
+});
+export type CreateGifInput = z.infer<typeof CreateGifInputSchema>;
+
 export const CreateStickyInputSchema = z.object({
   boardId: z.string().optional(),
   text: z.string().default(''),
