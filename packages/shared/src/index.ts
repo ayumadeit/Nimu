@@ -423,6 +423,30 @@ export const CreateGoalInputSchema = z.object({
 });
 export type CreateGoalInput = z.infer<typeof CreateGoalInputSchema>;
 
+export const TransactionQuerySchema = z.object({
+  type: z.enum(['expense', 'income']).optional(),
+  category: z.string().optional(),
+  paymentMethod: z.enum(PAYMENT_METHODS).optional(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  range: z.enum(['today', 'week', 'month']).optional(),
+  q: z.string().optional(),
+  minAmount: z.coerce.number().int().optional(),
+  maxAmount: z.coerce.number().int().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().optional(),
+});
+export type TransactionQuery = z.infer<typeof TransactionQuerySchema>;
+
+export const AddCustomCategoryInputSchema = z.object({
+  name: z.string().trim().min(1, 'Category name is required').max(50),
+  type: z.enum(['expense', 'income']).default('expense'),
+});
+export type AddCustomCategoryInput = z.infer<typeof AddCustomCategoryInputSchema>;
+
+export const UpdateGoalInputSchema = CreateGoalInputSchema.partial();
+export type UpdateGoalInput = z.infer<typeof UpdateGoalInputSchema>;
+
 export const GoalContributionInputSchema = z.object({
   amountMinor: z.number().int(), // positive for deposit, negative for withdrawal
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

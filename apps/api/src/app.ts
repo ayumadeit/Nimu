@@ -15,6 +15,9 @@ import { themesRoutes } from './routes/themes.js';
 import { notesRoutes } from './routes/notes.js';
 import { stickyRoutes } from './routes/sticky.js';
 import { drawingsRoutes } from './routes/drawings.js';
+import { transactionsRoutes } from './routes/transactions.js';
+import { budgetsRoutes } from './routes/budgets.js';
+import { goalsRoutes } from './routes/goals.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -90,6 +93,9 @@ export async function buildApp() {
   await app.register(notesRoutes, { prefix: '/api/v1/notes' });
   await app.register(stickyRoutes, { prefix: '/api/v1/sticky' });
   await app.register(drawingsRoutes, { prefix: '/api/v1/drawings' });
+  await app.register(transactionsRoutes, { prefix: '/api/v1/transactions' });
+  await app.register(budgetsRoutes, { prefix: '/api/v1/budgets' });
+  await app.register(goalsRoutes, { prefix: '/api/v1/goals' });
 
   return app;
 }
