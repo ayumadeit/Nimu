@@ -21,6 +21,7 @@ import { goalsRoutes } from './routes/goals.js';
 import { insightsRoutes } from './routes/insights.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 import { searchRoutes } from './routes/search.js';
+import { dataRoutes } from './routes/data.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -102,6 +103,7 @@ export async function buildApp() {
   await app.register(insightsRoutes, { prefix: '/api/v1/insights' });
   await app.register(dashboardRoutes, { prefix: '/api/v1/dashboard' });
   await app.register(searchRoutes, { prefix: '/api/v1/search' });
+  await app.register(dataRoutes, { prefix: '/api/v1/data' });
 
   return app;
 }
