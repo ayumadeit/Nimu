@@ -90,3 +90,30 @@ export async function apiRequest<T = any>(
 
   return res.json();
 }
+
+export async function downloadFile(endpoint: string, filename: string): Promise<void> {
+  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const headers: Record<string, string> = {};
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  const res = await fetch(url, {
+    headers,
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    throw new ApiError('DOWNLOAD_FAILED', 'Failed to download file', res.status);
+  }
+
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(blobUrl);
+}

@@ -214,7 +214,6 @@ ${note.plainText}
               plainText,
               excerpt,
               wordCount,
-              readingTimeMinutes,
               updatedAt: rawNote.updatedAt ? new Date(rawNote.updatedAt) : new Date(),
             },
           });
@@ -225,6 +224,13 @@ ${note.plainText}
 
     // 3. Import Stickies idempotently
     if (body.stickies && body.stickies.length > 0) {
+      let board = await prisma.stickyBoard.findFirst({ where: { userId } });
+      if (!board) {
+        board = await prisma.stickyBoard.create({
+          data: { userId, name: 'Main Board' },
+        });
+      }
+
       for (const rawSticky of body.stickies) {
         const text = (rawSticky.text || '').trim();
         if (!text) continue;
@@ -241,6 +247,7 @@ ${note.plainText}
           await prisma.stickyNote.create({
             data: {
               userId,
+              boardId: board.id,
               text,
               color: rawSticky.color || '#FFF3B0',
               rotation: rawSticky.rot || 0,

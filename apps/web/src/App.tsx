@@ -12,6 +12,8 @@ import DrawingCanvas from './pages/DrawingCanvas'
 import Finance from './pages/Finance'
 import Budgets from './pages/Budgets'
 import SavingsGoals from './pages/SavingsGoals'
+import Insights from './pages/Insights'
+import Settings from './pages/Settings'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import CommandPalette from './components/CommandPalette'
@@ -168,7 +170,7 @@ export default function App() {
         </header>
         <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 pb-28 md:p-8">
           <div className="mx-auto max-w-6xl">
-            {cur.id === 'home' ? <Dashboard go={go} /> : cur.id === 'notes' ? <Notes /> : cur.id === 'sticky' ? <StickyBoard /> : cur.id === 'draw' ? <DrawingCanvas /> : cur.id === 'finance' ? <Finance /> : cur.id === 'budgets' ? <Budgets /> : cur.id === 'goals' ? <SavingsGoals /> : cur.id === 'settings' ? <ThemeStudio /> : <Coming page={cur} />}
+            {cur.id === 'home' ? <Dashboard go={go} /> : cur.id === 'notes' ? <Notes /> : cur.id === 'sticky' ? <StickyBoard /> : cur.id === 'draw' ? <DrawingCanvas /> : cur.id === 'finance' ? <Finance /> : cur.id === 'budgets' ? <Budgets /> : cur.id === 'goals' ? <SavingsGoals /> : cur.id === 'insights' ? <Insights /> : cur.id === 'settings' ? <Settings /> : <Coming page={cur} />}
           </div>
         </main>
       </div>

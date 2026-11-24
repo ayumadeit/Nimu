@@ -14,6 +14,7 @@ vi.mock('../src/lib/prisma.js', () => {
       customTheme: { findMany: vi.fn() },
       drawing: { findMany: vi.fn() },
       budget: { findMany: vi.fn() },
+      stickyBoard: { findFirst: vi.fn(), create: vi.fn() },
     },
   };
 });
@@ -114,6 +115,7 @@ describe('Phase 5: Data Portability & LocalStorage Migration API', () => {
     (prisma.note.create as any).mockResolvedValue({ id: 'new-note' });
 
     // Sticky 1 does not exist
+    (prisma.stickyBoard.findFirst as any).mockResolvedValue({ id: 'board-123' });
     (prisma.stickyNote.findFirst as any).mockResolvedValue(null);
     (prisma.stickyNote.create as any).mockResolvedValue({ id: 'new-sticky' });
 
