@@ -453,3 +453,67 @@ export const GoalContributionInputSchema = z.object({
   note: z.string().default(''),
 });
 export type GoalContributionInput = z.infer<typeof GoalContributionInputSchema>;
+
+// ==========================================
+// PHASE 5: SEARCH, DASHBOARD & IMPORT SCHEMAS
+// ==========================================
+
+export const GlobalSearchQuerySchema = z.object({
+  q: z.string().min(1, 'Search term is required'),
+  types: z.string().default('notes,transactions,stickies'),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+export type GlobalSearchQuery = z.infer<typeof GlobalSearchQuerySchema>;
+
+export const LocalStorageImportSchema = z.object({
+  themeId: z.string().optional(),
+  mode: z.enum(MODES).optional(),
+  budget: z.number().optional(), // in rupees from local store
+  notes: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        title: z.string(),
+        body: z.string(),
+        updatedAt: z.number().optional(),
+        tags: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
+  stickies: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        text: z.string(),
+        color: z.string(),
+        rot: z.number().optional(),
+        pinned: z.boolean().optional(),
+      })
+    )
+    .optional(),
+  txs: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        type: z.enum(['expense', 'income']),
+        amount: z.number(), // in rupees
+        category: z.string(),
+        desc: z.string(),
+        date: z.string(),
+        method: z.string().optional(),
+      })
+    )
+    .optional(),
+  goals: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        target: z.number(), // in rupees
+        saved: z.number().optional(),
+      })
+    )
+    .optional(),
+  customThemes: z.array(z.any()).optional(),
+});
+export type LocalStorageImport = z.infer<typeof LocalStorageImportSchema>;
