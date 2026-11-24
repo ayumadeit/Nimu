@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Home, StickyNote, NotebookPen, Brush, Wallet, PiggyBank, Target, BarChart3, Settings as Cog, PanelLeftClose, PanelLeft, Menu, LogOut, Palette } from 'lucide-react'
+import { Home, StickyNote, NotebookPen, Brush, Wallet, PiggyBank, Target, BarChart3, Settings as Cog, PanelLeftClose, PanelLeft, Menu, LogOut, Palette, Search } from 'lucide-react'
 import { useStore, useTheme } from './store'
 import { applyPalette } from './themes'
 import Welcome from './pages/Welcome'
@@ -14,6 +14,7 @@ import Budgets from './pages/Budgets'
 import SavingsGoals from './pages/SavingsGoals'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import CommandPalette from './components/CommandPalette'
 
 const NAV = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'notes', label: 'My Notes', icon: NotebookPen },
@@ -49,7 +50,19 @@ export default function App() {
   const [authView, setAuthView] = useState<'login' | 'register'>('login')
   const [page, setPage] = useState(() => location.hash.slice(1) || 'home')
   const [drawer, setDrawer] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const go: Go = p => { setPage(p); location.hash = p; setDrawer(false) }
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   useEffect(() => {
     const h = () => setPage(location.hash.slice(1) || 'home')
@@ -143,6 +156,15 @@ export default function App() {
             {sidebarCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
           </button>
           <h1 className="text-lg font-extrabold">{cur.label}</h1>
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="ml-auto flex items-center gap-2 rounded-xl bg-ink/5 hover:bg-ink/10 px-3 py-1.5 text-xs font-semibold text-ink/70 transition"
+            title="Search (⌘K)"
+          >
+            <Search size={14} />
+            <span className="hidden sm:inline">Search...</span>
+            <kbd className="hidden sm:inline-block rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono border border-ink/10 shadow-xs">⌘K</kbd>
+          </button>
         </header>
         <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 pb-28 md:p-8">
           <div className="mx-auto max-w-6xl">
@@ -171,6 +193,7 @@ export default function App() {
           ))}
         </AnimatePresence>
       </div>
+      <CommandPalette isOpen={searchOpen} onClose={() => setSearchOpen(false)} go={go} />
     </div>
   )
 }
