@@ -517,3 +517,25 @@ export const LocalStorageImportSchema = z.object({
   customThemes: z.array(z.any()).optional(),
 });
 export type LocalStorageImport = z.infer<typeof LocalStorageImportSchema>;
+
+// ==========================================
+// PHASE 6: RECURRING TRANSACTIONS ENGINE SCHEMAS
+// ==========================================
+
+export const RECURRING_FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
+export type RecurringFrequency = (typeof RECURRING_FREQUENCIES)[number];
+
+export const CreateRecurringRuleInputSchema = z.object({
+  template: z.object({
+    type: z.enum(['expense', 'income']),
+    amountMinor: z.number().int().positive('Amount must be positive in minor units (paise)'),
+    category: z.string().trim().min(1, 'Category is required'),
+    description: z.string().trim().min(1, 'Description is required').max(200),
+    paymentMethod: z.enum(PAYMENT_METHODS).default('upi'),
+    notes: z.string().default(''),
+  }),
+  frequency: z.enum(RECURRING_FREQUENCIES),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+export type CreateRecurringRuleInput = z.infer<typeof CreateRecurringRuleInputSchema>;
+
